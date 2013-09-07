@@ -10,7 +10,7 @@ Author: Ilan Schnell
 """
 from bitarray._bitarray import _bitarray, bitdiff, bits2bytes, _sysinfo
 
-__version__ = '0.8.1'
+__version__ = '0.8.2'
 
 
 def _tree_insert(tree, sym, ba):
@@ -117,6 +117,15 @@ iterates over iterable object with symbols, and extends the bitarray
 with the corresponding bitarray for each symbols."""
         _check_codedict(codedict)
         self._encode(codedict, iterable)
+
+    def __int__(self):
+        raise TypeError("int() argument cannot be a bitarray")
+
+    def __long__(self):
+        raise TypeError("long() argument cannot be a bitarray")
+
+    def __float__(self):
+        raise TypeError("float() argument cannot be a bitarray")
 
 
 def test(verbosity=1, repeat=1):
