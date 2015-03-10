@@ -21,6 +21,7 @@
 #define PyString_AsString  PyBytes_AsString
 #define PyString_ConcatAndDel  PyBytes_ConcatAndDel
 #define Py_TPFLAGS_HAVE_WEAKREFS  0
+#define Py_TPFLAGS_CHECKTYPES 0
 #endif
 
 #if PY_MAJOR_VERSION == 2 && PY_MINOR_VERSION < 5
@@ -341,11 +342,6 @@ bitwise(bitarrayobject *self, PyObject *arg, enum op_type oper)
     bitarrayobject *other;
     Py_ssize_t i;
 
-    if (!bitarray_Check(arg)) {
-        PyErr_SetString(PyExc_TypeError,
-                        "bitarray object expected for bitwise operation");
-        return -1;
-    }
     other = (bitarrayobject *) arg;
     if (self->nbits != other->nbits) {
         PyErr_SetString(PyExc_ValueError,
@@ -2055,6 +2051,10 @@ bitarray_ ## oper (bitarrayobject *self, PyObject *other)           \
 {                                                                   \
     PyObject *res;                                                  \
                                                                     \
+    if (!bitarray_Check(self) || !bitarray_Check(other)) {          \
+        Py_INCREF(Py_NotImplemented);                               \
+        return Py_NotImplemented;                                   \
+    }                                                               \
     res = bitarray_copy(self);                                      \
     if (bitwise((bitarrayobject *) res, other, OP_ ## oper) < 0) {  \
         Py_DECREF(res);                                             \
@@ -2072,6 +2072,10 @@ BITWISE_FUNC(xor)
 static PyObject *                                            \
 bitarray_i ## oper (bitarrayobject *self, PyObject *other)   \
 {                                                            \
+    if (!bitarray_Check(other)) {                            \
+        Py_INCREF(Py_NotImplemented);                        \
+        return Py_NotImplemented;                            \
+    }                                                        \
     if (bitwise(self, other, OP_ ## oper) < 0)               \
         return NULL;                                         \
     Py_INCREF(self);                                         \
@@ -2081,6 +2085,110 @@ bitarray_i ## oper (bitarrayobject *self, PyObject *other)   \
 BITWISE_IFUNC(and)
 BITWISE_IFUNC(or)
 BITWISE_IFUNC(xor)
+
+static PyObject *
+bitarray_int(bitarrayobject *self)
+{
+    PyErr_SetString(PyExc_TypeError, "int() argument cannot be a bitarray");
+    return NULL;
+}
+
+#ifndef IS_PY3K
+static PyObject *
+bitarray_long(bitarrayobject *self)
+{
+    PyErr_SetString(PyExc_TypeError, "long() argument cannot be a bitarray");
+    return NULL;
+}
+#endif
+
+static PyObject *
+bitarray_float(bitarrayobject *self)
+{
+    PyErr_SetString(PyExc_TypeError, "float() argument cannot be a bitarray");
+    return NULL;
+}
+
+#ifdef IS_PY3K
+static PyNumberMethods bitarray_as_number = {
+    0,                            /* nb_add */
+    0,                            /* nb_subtract */
+    0,                            /* nb_multiply */
+    0,                            /* nb_remainder */
+    0,                            /* nb_divmod */
+    0,                            /* nb_power */
+    0,                            /* nb_negative */
+    0,                            /* nb_positive */
+    0,                            /* nb_absolute */
+    0,                            /* nb_bool */
+    (unaryfunc)bitarray_cpinvert, /* nb_invert */
+    0,                            /* nb_lshift */
+    0,                            /* nb_rshift */
+    (binaryfunc)bitarray_and,     /* nb_and */
+    (binaryfunc)bitarray_xor,     /* nb_xor */
+    (binaryfunc)bitarray_or,      /* nb_or */
+    (unaryfunc)bitarray_int,      /* nb_int */
+    0,                            /* nb_reserved */
+    (unaryfunc)bitarray_float,    /* nb_float */
+    0,                            /* nb_inplace_add */
+    0,                            /* nb_inplace_subtract */
+    0,                            /* nb_inplace_multiply */
+    0,                            /* nb_inplace_remainder */
+    0,                            /* nb_inplace_power */
+    0,                            /* nb_inplace_lshift */
+    0,                            /* nb_inplace_rshift */
+    (binaryfunc)bitarray_iand,    /* nb_inplace_and */
+    (binaryfunc)bitarray_ixor,    /* nb_inplace_xor */
+    (binaryfunc)bitarray_ior,     /* nb_inplace_or */
+    0,                            /* nb_floor_divide */
+    0,                            /* nb_true_divide */
+    0,                            /* nb_inplace_floor_divide */
+    0,                            /* nb_inplace_true_divide */
+    0,                            /* nb_index */
+};
+#else
+static PyNumberMethods bitarray_as_number = {
+    0,                            /* nb_add */
+    0,                            /* nb_subtract */
+    0,                            /* nb_multiply */
+    0,                            /* nb_divide */
+    0,                            /* nb_remainder */
+    0,                            /* nb_divmod */
+    0,                            /* nb_power */
+    0,                            /* nb_negative */
+    0,                            /* nb_positive */
+    0,                            /* nb_absolute */
+    0,                            /* nb_nonzero */
+    (unaryfunc)bitarray_cpinvert, /* nb_invert */
+    0,                            /* nb_lshift */
+    0,                            /* nb_rshift */
+    (binaryfunc)bitarray_and,     /* nb_and */
+    (binaryfunc)bitarray_xor,     /* nb_xor */
+    (binaryfunc)bitarray_or,      /* nb_or */
+    0,                            /* nb_coerce */
+    (unaryfunc)bitarray_int,      /* nb_int */
+    (unaryfunc)bitarray_long,     /* nb_long */
+    (unaryfunc)bitarray_float,    /* nb_float */
+    0,                            /* nb_oct */
+    0,                            /* nb_hex */
+    0,                            /* nb_inplace_add */
+    0,                            /* nb_inplace_subtract */
+    0,                            /* nb_inplace_multiply */
+    0,                            /* nb_inplace_divide */
+    0,                            /* nb_inplace_remainder */
+    0,                            /* nb_inplace_power */
+    0,                            /* nb_inplace_lshift */
+    0,                            /* nb_inplace_rshift */
+    (binaryfunc)bitarray_iand,    /* nb_inplace_and */
+    (binaryfunc)bitarray_ixor,    /* nb_inplace_xor */
+    (binaryfunc)bitarray_ior,     /* nb_inplace_or */
+    0,                            /* nb_floor_divide */
+    0,                            /* nb_true_divide */
+    0,                            /* nb_inplace_floor_divide */
+    0,                            /* nb_inplace_true_divide */
+    0,                            /* nb_index */
+};
+#endif
 
 /******************* variable length encoding and decoding ***************/
 
@@ -2481,15 +2589,6 @@ bitarray_methods[] = {
     {"__reduce__",   (PyCFunction) bitarray_reduce,      METH_NOARGS,
      reduce_doc},
 
-    /* number methods */
-    {"__and__",      (PyCFunction) bitarray_and,         METH_O,       0},
-    {"__or__",       (PyCFunction) bitarray_or,          METH_O,       0},
-    {"__xor__",      (PyCFunction) bitarray_xor,         METH_O,       0},
-    {"__iand__",     (PyCFunction) bitarray_iand,        METH_O,       0},
-    {"__ior__",      (PyCFunction) bitarray_ior,         METH_O,       0},
-    {"__ixor__",     (PyCFunction) bitarray_ixor,        METH_O,       0},
-    {"__invert__",   (PyCFunction) bitarray_cpinvert,    METH_NOARGS,  0},
-
     {NULL,           NULL}  /* sentinel */
 };
 
@@ -2851,7 +2950,7 @@ static PyTypeObject Bitarraytype = {
     0,                                        /* tp_setattr */
     0,                                        /* tp_compare */
     (reprfunc) bitarray_repr,                 /* tp_repr */
-    0,                                        /* tp_as_number*/
+    &bitarray_as_number,                      /* tp_as_number*/
     &bitarray_as_sequence,                    /* tp_as_sequence */
     &bitarray_as_mapping,                     /* tp_as_mapping */
     0,                                        /* tp_hash */
@@ -2865,6 +2964,7 @@ static PyTypeObject Bitarraytype = {
     0,                                        /* tp_as_buffer */
 #endif
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_WEAKREFS
+    | Py_TPFLAGS_CHECKTYPES
 #ifdef WITH_BUFFER
     | Py_TPFLAGS_HAVE_NEWBUFFER
 #endif
