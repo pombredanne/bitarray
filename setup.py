@@ -1,7 +1,13 @@
 import re
 from os.path import join
 from distutils.core import setup, Extension
+import os
 
+gsl_dir = '/usr';
+try:
+	gsl_dir = os.environ['GSL_DIR']
+except:
+	None
 
 kwds = {}
 kwds['long_description'] = open('README.rst').read()
@@ -38,6 +44,7 @@ setup(
     description = "efficient arrays of booleans -- C extension",
     packages = ["bitarray"],
     ext_modules = [Extension(name = "bitarray._bitarray",
-                             sources = ["bitarray/_bitarray.c"])],
+                             sources = ["bitarray/_bitarray.c"],
+                             extra_compile_args = ['-march=native'])],
     **kwds
 )

@@ -48,6 +48,9 @@ Key features
 Installation
 ------------
 
+Requirements:
+GNU Scientific Library.  Set the environmental variable GSL_DIR to the installation path. 
+
 bitarray can be installed from source::
 
    $ tar xzf bitarray-0.8.2.tar.gz
@@ -529,6 +532,20 @@ Reference
    This is function does the same as (a ^ b).count(), but is more memory
    efficient, as no intermediate bitarray object gets created
 
+``bitand(a, b)`` -> int
+   Return the shared bit count between two bitarrays a and b.
+   This is function does the same as (a & b).count(), but is more memory
+   efficient, as no intermediate bitarray object gets created
+
+``bitor(a, b)`` -> int
+   Return the total bit count between two bitarrays a and b.
+   This is function does the same as (a | b).count(), but is more memory
+   efficient, as no intermediate bitarray object gets created
+
+``tanimoto(a, b)`` -> int
+   Return the tanimoto function (a.k.a. Jaccard index) on the bitarrays a and b.
+   This is function does the same as (a & b).count() / (a | b).count(), but is more memory
+   efficient, and highly optimized
 
 ``bits2bytes(n)`` -> int
    Return the number of bytes necessary to store n bits.

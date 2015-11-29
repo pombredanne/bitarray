@@ -8,6 +8,7 @@ import sys
 import unittest
 import tempfile
 import shutil
+import time
 from random import randint
 
 is_py3k = bool(sys.version_info[0] == 3)
@@ -18,7 +19,7 @@ else:
     from cStringIO import StringIO
 
 
-from bitarray import bitarray, bitdiff, bits2bytes, __version__
+from bitarray import bitarray, bitdiff, bitand, bitor, tanimoto, tanimoto_vec, bits2bytes, __version__
 
 
 tests = []
@@ -27,6 +28,15 @@ if sys.version_info[:2] < (2, 6):
     def next(x):
         return x.next()
 
+# timing decorator
+def timing(f):
+    def wrap(*args):
+        time1 = time.time()
+        ret = f(*args)
+        time2 = time.time()
+        print "\n%s function took %0.3f ms" % (f.func_name, (time2-time1)*1000.0)
+        return ret
+    return wrap
 
 def to_bytes(s):
     if is_py3k:
@@ -146,6 +156,123 @@ class TestsModuleFunctions(unittest.TestCase, Util):
             diff = sum(a[i] ^ b[i] for i in range(n))
             self.assertEqual(bitdiff(a, b), diff)
 
+    def test_bitand(self):
+        a = bitarray('0011')
+        b = bitarray('0101')
+        self.assertEqual(bitand(a, b), 1)
+        self.assertRaises(TypeError, bitand, a, '')
+        self.assertRaises(TypeError, bitand, '1', b)
+        self.assertRaises(TypeError, bitand, a, 4)
+        b.append(1)
+        self.assertRaises(ValueError, bitand, a, b)
+
+        for n in list(range(50)) + [randint(1000, 2000)]:
+            a = bitarray()
+            a.frombytes(os.urandom(bits2bytes(n)))
+            del a[n:]
+            b = bitarray()
+            b.frombytes(os.urandom(bits2bytes(n)))
+            del b[n:]
+            sharedbits = sum(a[i] & b[i] for i in range(n))
+            self.assertEqual(bitand(a, b), sharedbits)
+
+    def test_bitor(self):
+        a = bitarray('0011')
+        b = bitarray('0101')
+        self.assertEqual(bitor(a, b), 3)
+        self.assertRaises(TypeError, bitor, a, '')
+        self.assertRaises(TypeError, bitor, '1', b)
+        self.assertRaises(TypeError, bitor, a, 4)
+        b.append(1)
+        self.assertRaises(ValueError, bitor, a, b)
+
+        for n in list(range(50)) + [randint(1000, 2000)]:
+            a = bitarray()
+            a.frombytes(os.urandom(bits2bytes(n)))
+            del a[n:]
+            b = bitarray()
+            b.frombytes(os.urandom(bits2bytes(n)))
+            del b[n:]
+            totalbits = sum(a[i] | b[i] for i in range(n))
+            self.assertEqual(bitor(a, b), totalbits)
+
+    def test_tanimoto(self):
+        a = bitarray('0011')
+        b = bitarray('0101')
+        self.assertEqual(tanimoto(a, b), 1.0/3.0)
+        self.assertRaises(TypeError, tanimoto, a, '')
+        self.assertRaises(TypeError, tanimoto, '1', b)
+        self.assertRaises(TypeError, tanimoto, a, 4)
+        b.append(1)
+        self.assertRaises(ValueError, tanimoto, a, b)
+
+        for n in list(range(1,3096)):
+            a = bitarray()
+            a.frombytes(os.urandom(bits2bytes(n)))
+            del a[n:]
+            b = bitarray()
+            b.frombytes(os.urandom(bits2bytes(n)))
+            del b[n:]
+            sharedbits = sum(a[i] & b[i] for i in range(n))
+            totalbits = sum(a[i] | b[i] for i in range(n))
+            t = 1.0
+            if totalbits > 0:
+                t = (0.0 + sharedbits) / totalbits
+            v = tanimoto(a,b);
+            if (v != t):
+            	print("not equal %f, %f.  %d / %d" % (v, t, sharedbits, totalbits))
+            self.assertEqual(v, t)
+
+    def _test_tanimoto_vec(self, n = 4096, istep = 2, jstep = 32):
+        al = list()
+        bl = list();
+        ilistsize = istep * 5
+        jlistsize = jstep * 7
+        for i in xrange(0,ilistsize):
+            a = bitarray()
+            a.frombytes(os.urandom(bits2bytes(n)))
+            del a[n:]
+            al.append(a)
+        for j in xrange(0,jlistsize):
+            b = bitarray()
+            b.frombytes(os.urandom(bits2bytes(n)))
+            del b[n:]
+            bl.append(b)
+        results = list()
+        for i in xrange(0,ilistsize):
+            a = al[i];
+            for j in xrange(0,jlistsize):    
+                b = bl[j];
+                v = tanimoto(a,b);
+                results.append(v)
+        results2 = list()
+        for i in xrange(0, len(results)):
+            results2.append(-1.0)
+        for i in xrange(0, ilistsize, istep):
+            for j in xrange(0, jlistsize, jstep):
+            	#print "%d-%d by %d-%d" % (i, i+istep, j, j+jstep) 
+                minimatrix = tanimoto_vec(al, bl, i, j, istep, jstep) 
+                self.assertEquals(istep*jstep, len(minimatrix) * len(minimatrix[0]))
+                for x in xrange(0, istep*jstep):
+                    idxi = x / jstep
+                    idxj = x - idxi*jstep
+                    newx = (i+idxi)*jlistsize + j+idxj
+                    results2[newx] = minimatrix[idxi][idxj]
+        self.assertEqual(len(results), len(results2))
+        for x in xrange(0, len(results)):
+            # x = i*jlistsize + j
+            i = x / jlistsize
+            j = x - i*jlistsize
+            #print "testing %d %d = %d: %f %f" % (i,j,x,results[x],results2[x])
+            self.assertEqual(results[x], results2[x], "%d (%d,%d) [%f] != [%f] %s %s" % (x, i, j, results[x], results2[x], al[i], bl[j]))
+    
+    def test_tanimoto_vec(self):
+    	for n in (7, 8, 64, 128, 256, 512, 2048, 504, 520, 501, 523):
+    		for istep in (1, 2, 3, 7, 9, 8):
+    			for jstep in (1, 2, 4, 16, 3, 7):
+    				#print "n: %d, istep: %d, jstep: %d" % (n, istep, jstep)
+    				self._test_tanimoto_vec(n, istep, jstep)
+    
     def test_bits2bytes(self):
         for arg in ['foo', [], None, {}]:
             self.assertRaises(TypeError, bits2bytes, arg)
@@ -168,6 +295,52 @@ class TestsModuleFunctions(unittest.TestCase, Util):
                      (2**62, 2**59), (2**63-8, 2**60-1)]:
             self.assertEqual(bits2bytes(n), m)
 
+    @timing
+    def timeCountOld(self, fp1):
+        x = None
+        for i in xrange(0, 1000):
+            x = fp1.countOld()
+        return x
+    
+    @timing
+    def timeCount(self, fp1):
+        x = None
+        for i in xrange(0, 1000):
+            x = fp1.count()
+        return x
+    
+    @timing
+    def timeBitAndOld(self, fp1, fp2):
+        x = None
+        for i in xrange(0,1000):
+            x = fp1 & fp2
+        return x
+    
+    @timing
+    def timeBitAnd(self, fp1, fp2):
+        x = None
+        for i in xrange(0,1000):
+            x = bitand(fp1, fp2)
+        return x
+    
+    def test_timings(self):
+        n = 262144
+        fp1 = bitarray()
+        fp1.frombytes(os.urandom(bits2bytes(n)))
+        x = fp1.count()
+        a = self.timeCount(fp1) 
+        b = self.timeCountOld(fp1)
+        self.assertEqual(x,a)
+        self.assertEqual(x,b)
+        
+        fp2 = bitarray()
+        fp2.frombytes(os.urandom(bits2bytes(n)))
+        x = (fp1 & fp2).count()
+        a = self.timeBitAnd(fp1, fp2)
+        b = self.timeBitAndOld(fp1, fp2).count()
+        self.assertEqual(x, a)
+        self.assertEqual(x, b)
+            
 
 tests.append(TestsModuleFunctions)
 
