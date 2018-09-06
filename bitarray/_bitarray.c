@@ -234,25 +234,31 @@ copy_n(bitarrayobject *self, idx_t a,
     assert(0 <= n && n <= self->nbits && n <= other->nbits);
     assert(0 <= a && a <= self->nbits - n);
     assert(0 <= b && b <= other->nbits - n);
-
-    /* XXX
-    if (self->endian == other->endian && a % 8 == 0 && b % 8 == 0 && n >= 8)
-    {
-        Py_ssize_t bytes;
-        idx_t bits;
-
-        bytes = n / 8;
-        bits = 8 * bytes;
-        copy_n(self, bits + a, other, bits + b, n - bits);
-        memmove(self->ob_item + a / 8, other->ob_item + b / 8, bytes);
+    if (n == 0) {
         return;
     }
-    */
+
+    if (self->endian == other->endian && a % 8 == 0 && b % 8 == 0 && n >= 8)
+    {
+        const Py_ssize_t bytes = (Py_ssize_t) n / 8;
+        const idx_t bits = bytes * 8;
+
+        if (a <= b) {
+            memmove(self->ob_item + a / 8, other->ob_item + b / 8, bytes);
+        }
+        if (n != bits) {
+            copy_n(self, bits + a, other, bits + b, n - bits);
+        }
+        if (a > b) {
+            memmove(self->ob_item + a / 8, other->ob_item + b / 8, bytes);
+        }
+        return;
+    }
 
     /* the different type of looping is only relevant when other and self
        are the same object, i.e. when copying a piece of an bitarrayobject
        onto itself */
-    if (a < b) {
+    if (a <= b) {
         for (i = 0; i < n; i++)             /* loop forward (delete) */
             setbit(self, i + a, GETBIT(other, i + b));
     }
@@ -570,15 +576,22 @@ static int
 extend_bitarray(bitarrayobject *self, bitarrayobject *other)
 {
     idx_t n_sum;
+    idx_t n_other_bits;
 
     if (other->nbits == 0)
         return 0;
 
+    /*
+        Note: other may be self. Thus we take the size before we resize,
+        ensuring we only copy the right parts of the array.
+    */
+    n_other_bits = other->nbits;
     n_sum = self->nbits + other->nbits;
+
     if (resize(self, n_sum) < 0)
         return -1;
 
-    copy_n(self, n_sum - other->nbits, other, 0, other->nbits);
+    copy_n(self, n_sum - n_other_bits, other, 0, n_other_bits);
     return 0;
 }
 
@@ -1267,7 +1280,7 @@ PyDoc_STRVAR(fill_doc,
 "fill() -> int\n\
 \n\
 Adds zeros to the end of the bitarray, such that the length of the bitarray\n\
-is not a multiple of 8.  Returns the number of bits added (0..7).");
+will be a multiple of 8.  Returns the number of bits added (0..7).");
 
 
 static PyObject *

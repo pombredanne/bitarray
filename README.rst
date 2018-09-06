@@ -5,7 +5,7 @@ bitarray: efficient arrays of booleans
 This module provides an object type which efficiently represents an array
 of booleans.  Bitarrays are sequence types and behave very much like usual
 lists.  Eight bits are represented by one byte in a contiguous block of
-memory.  The user can select between two representations; little-endian
+memory.  The user can select between two representations: little-endian
 and big-endian.  All of the functionality is implemented in C.
 Methods for accessing the machine representation are provided.
 This can be useful when bit level access to binary files is required,
@@ -50,8 +50,8 @@ Installation
 
 bitarray can be installed from source::
 
-   $ tar xzf bitarray-0.8.2.tar.gz
-   $ cd bitarray-0.8.2
+   $ tar xzf bitarray-0.8.3.tar.gz
+   $ cd bitarray-0.8.3
    $ python setup.py install
 
 On Unix systems, the latter command may have to be executed with root
@@ -62,7 +62,7 @@ Once you have installed the package, you may want to test it::
 
    $ python -c 'import bitarray; bitarray.test()'
    bitarray is installed in: /usr/local/lib/python2.7/site-packages/bitarray
-   bitarray version: 0.8.2
+   bitarray version: 0.8.3
    2.7.2 (r271:86832, Nov 29 2010) [GCC 4.2.1 (SUSE Linux)]
    .........................................................................
    ...........................................
@@ -80,9 +80,9 @@ Using the module
 ----------------
 
 As mentioned above, bitarray objects behave very much like lists, so
-there is not too new to learn.  The biggest difference to list objects
+there is not too much to learn.  The biggest difference from list objects
 is the ability to access the machine representation of the object.
-When doing so, the bit endianness is of importance, this issue is
+When doing so, the bit endianness is of importance; this issue is
 explained in detail in the section below.  Here, we demonstrate the
 basic usage of bitarray objects:
 
@@ -156,8 +156,8 @@ Bit endianness
 --------------
 
 Since a bitarray allows addressing of individual bits, where the machine
-represents 8 bits in one byte, there two obvious choices for this mapping;
-little- and big-endian.
+represents 8 bits in one byte, there are two obvious choices for this
+mapping: little- and big-endian.
 When creating a new bitarray object, the endianness can always be
 specified explicitly:
 
@@ -233,11 +233,11 @@ endianness:
    >>> a.tobytes() == b.tobytes()
    True
 
-The default bit endianness is currently big-endian, however this may change
+The default bit endianness is currently big-endian; however, this may change
 in the future, and when dealing with the machine representation of bitarray
 objects, it is recommended to always explicitly specify the endianness.
 
-Unless, explicitly converting to machine representation, using
+Unless explicitly converting to machine representation, using
 the ``tobytes``, ``frombytes``, ``tofile`` and ``fromfile`` methods,
 the bit endianness will have no effect on any computation, and one
 can safely ignore setting the endianness, and other details of this section.
@@ -389,7 +389,7 @@ Reference
 
 ``fill()`` -> int
    Adds zeros to the end of the bitarray, such that the length of the bitarray
-   is not a multiple of 8.  Returns the number of bits added (0..7).
+   will be a multiple of 8.  Returns the number of bits added (0..7).
 
 
 ``frombytes(bytes)``
@@ -537,8 +537,18 @@ Reference
 Change log
 ----------
 
-2013-XX-XX   0.8.2:
+**0.8.3** (2018-07-06):
 
+  * add exception to setup.py when README.rst cannot be opened
+
+
+**0.8.2** (2018-05-30):
+
+  * add official Python 3.6 support (although it was already working)
+  * fix description of fill(), #52
+  * handle extending self correctly, #28
+  * copy_n: fast copy with memmove fixed, #43
+  * minor clarity/wording changes to README, #23
 
 
 **0.8.1** (2013-03-30):
@@ -546,20 +556,6 @@ Change log
   * fix issue #10, i.e. int(bitarray()) segfault
   * added tests for using a bitarray object as an argument to functions
     like int, long (on Python 2), float, list, tuple, dict
-
-
-**0.8.0** (2012-04-04):
-
-  * add Python 2.4 support
-  * add (module level) function bitdiff for calculating the difference
-    between two bitarrays
-
-
-**0.7.0** (2012-02-15):
-
-  * add iterdecode method (C level), which returns an iterator but is
-    otherwise like the decode method
-  * improve memory efficiency and speed of pickling large bitarray objects
 
 
 Please find the complete change log

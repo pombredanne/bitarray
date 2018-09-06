@@ -515,7 +515,7 @@ class SliceTests(unittest.TestCase, Util):
         for a in self.randombitarrays():
             la = len(a)
             if la == 0: continue
-            for dum in range(3):
+            for dum in range(50):
                 step = self.rndsliceidx(la)
                 if step == 0: step = None
                 s = slice(self.rndsliceidx(la),
@@ -574,7 +574,7 @@ class SliceTests(unittest.TestCase, Util):
         for a in self.randombitarrays():
             la = len(a)
             if la == 0: continue
-            for dum in range(10):
+            for dum in range(50):
                 step = self.rndsliceidx(la)
                 if step == 0: step = None
                 s = slice(self.rndsliceidx(la),
@@ -1210,6 +1210,24 @@ class ExtendTests(unittest.TestCase, Util):
                 self.assertEqual(id(c), idc)
                 self.assertEqual(c.tolist(), a + b)
                 self.check_obj(c)
+
+    def test_extend_self(self):
+        a = bitarray()
+        a.extend(a)
+        self.assertEqual(a, bitarray())
+
+        a = bitarray('1')
+        a.extend(a)
+        self.assertEqual(a, bitarray('11'))
+
+        a = bitarray('110')
+        a.extend(a)
+        self.assertEqual(a, bitarray('110110'))
+
+        for a in self.randombitarrays():
+            b = bitarray(a)
+            a.extend(a)
+            self.assertEqual(a, b + b)
 
 
 tests.append(ExtendTests)
@@ -2144,9 +2162,9 @@ if sys.version_info[:2] == (2, 7):
 # ---------------------------------------------------------------------------
 
 def run(verbosity=1, repeat=1):
-    print('bitarray is installed in: ' + os.path.dirname(__file__))
-    print('bitarray version: ' + __version__)
-    print(sys.version)
+    print('bitarray is installed in: %s' % os.path.dirname(__file__))
+    print('bitarray version: %s' % __version__)
+    print('Python version: %s' % sys.version)
 
     suite = unittest.TestSuite()
     for cls in tests:

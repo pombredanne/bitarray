@@ -1,5 +1,20 @@
-2013-XX-XX   0.8.2:
+2018-XX-XX   0.8.4:
 -------------------
+  * add official Python 3.7 support (drop Python 3.1 and 3.2 support)
+
+
+2018-07-06   0.8.3:
+-------------------
+  * add exception to setup.py when README.rst cannot be opened
+
+
+2018-05-30   0.8.2:
+-------------------
+  * add official Python 3.6 support (although it was already working)
+  * fix description of fill(), #52
+  * handle extending self correctly, #28
+  * copy_n: fast copy with memmove fixed, #43
+  * minor clarity/wording changes to README, #23
 
 
 2013-03-30   0.8.1:
