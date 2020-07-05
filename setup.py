@@ -5,7 +5,7 @@ from distutils.core import setup, Extension
 
 kwds = {}
 try:
-    kwds['long_description'] = open('README.rst').read()
+    kwds['long_description'] = open('README.md').read()
 except IOError:
     pass
 
@@ -28,21 +28,20 @@ setup(
         "Operating System :: OS Independent",
         "Programming Language :: C",
         "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.4",
-        "Programming Language :: Python :: 2.5",
         "Programming Language :: Python :: 2.6",
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.3",
-        "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
         "Topic :: Utilities",
     ],
     description = "efficient arrays of booleans -- C extension",
     packages = ["bitarray"],
     ext_modules = [Extension(name = "bitarray._bitarray",
-                             sources = ["bitarray/_bitarray.c"])],
+                             sources = ["bitarray/_bitarray.c"]),
+                   Extension(name = "bitarray._util",
+                             sources = ["bitarray/_util.c"])],
     **kwds
 )

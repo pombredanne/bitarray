@@ -1,6 +1,107 @@
-2018-XX-XX   0.8.4:
+2020-07-XX   1.3.0:
 -------------------
-  * add official Python 3.7 support (drop Python 3.1 and 3.2 support)
+  * add `bitarray.util.make_endian()`
+  * `util.ba2hex()` and `util.hex2ba()` now also support little-endian
+  * add `bitarray.get_default_endian()`
+  * remove `.fromstring()` and `.tostring()` methods, these have been
+    deprecated 8 years ago, since version 0.4.0
+  * add `__all__` in `bitarray/__init__.py`
+  * drop Python 3.3 and 3.4 support
+
+
+2020-05-18   1.2.2:
+-------------------
+  * `util.ba2hex` now always return a string object (instead of bytes object
+    for Python 3), see issue #94
+  * `util.hex2ba` allows a unicode object as input on Python 2
+  * Determine 64-bitness of interpreter in a cross-platform fashion #91,
+    in order to better support PyPy
+
+
+2020-01-06   1.2.1:
+-------------------
+  * simplify markdown of readme so PyPI renders better
+  * make tests for bitarray.util required (instead of warning when
+    they cannot be imported)
+
+
+2019-12-06   1.2.0:
+-------------------
+  * add bitarray.util module which provides useful utility functions
+  * deprecate `bitarray.bitdiff` in favor of `bitarray.util.count_xor`
+  * use markdown for documentation
+  * fix bug in .count() on 32bit systems in special cases when array size
+    is 2^29 bits or larger
+  * simplified tests by using bytes syntax
+  * update smallints and sieve example to use new utility module
+  * simplified mandel example to use numba
+  * use file context managers in tests
+
+
+2019-11-07   1.1.0:
+-------------------
+  * add frozenbitarray object
+  * add optional start and stop parameters to .count() method
+  * add official Python 3.8 support
+  * optimize setrange() C-function by using memset
+  * fix issue #74, bitarray is hashable on Python 2
+  * fix issue #68, `unittest.TestCase.assert_` deprecated
+  * improved test suite - tests should run in about 1 second
+  * update documentation to use positional-only syntax in docstrings
+  * update readme to pass Python 3 doctest
+  * add utils module to examples
+
+
+2019-07-19   1.0.1:
+-------------------
+  * fix readme to pass `twine check`
+
+
+2019-07-15   1.0.0:
+-------------------
+  * fix bitarrays beings created from unicode in Python 2
+  * use `PyBytes_*` in C code, treating the Py3k function names as default,
+    which also removes all redefinitions of `PyString_*`
+  * handle negative arguments of .index() method consistently with how
+    they are treated for lists
+  * add a few more comments to the C code
+  * move imports outside tests: pickle, io, etc.
+  * drop Python 2.5 support
+
+
+2019-05-20   0.9.3:
+-------------------
+  * refactor resize() - only shrink allocated memory if new size falls
+    lower than half the allocated size
+  * improve error message when trying to initialize from float or complex
+
+
+2019-04-29   0.9.2:
+-------------------
+  * fix to compile on Windows with VS 2015, issue #72
+
+
+2019-04-28   0.9.1:
+-------------------
+  * fix types to actually be types, #29
+  * check for ambiguous prefix codes when building binary tree for decoding
+  * remove Python level methods: encode, decode, iterdecode (in favor of
+    having these implemented on the C-level along with check_codedict)
+  * fix self tests for Python 2.5 and 2.6
+  * move all Huffman code related example code into examples/huffman
+  * add code to generate graphviz .dot file of Huffman tree to examples
+
+
+2019-04-22   0.9.0:
+-------------------
+  * more efficient decode and iterdecode by using C-level binary tree
+    instead of a python one, #54
+  * added buffer protocol support for Python 3, #55
+  * fixed invalid pointer exceptions in pypy, #47
+  * made all examples Py3k compatible
+  * add gene sequence example
+  * add official Python 3.7 support
+  * drop Python 2.4, 3.1 and 3.2 support
 
 
 2018-07-06   0.8.3:
@@ -90,7 +191,7 @@
 2009-01-15   0.3.4:
 -------------------
   * Made C code less ambiguous, such that the package compiles on
-    Visual Studio, will all tests passing.
+    Visual Studio, with all tests passing.
 
 
 2008-12-14   0.3.3:
@@ -114,7 +215,7 @@
 
 2008-09-30   0.3.0:
 -------------------
-  * Fixed a severe bug for 64bit machines.  Implemented all methods in C,
+  * Fixed a severe bug for 64-bit machines.  Implemented all methods in C,
     improved tests.
   * Removed deprecated methods from01 and fromlist.
 
